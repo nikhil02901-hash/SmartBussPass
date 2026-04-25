@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <div class="h1">Bus Location Update</div>
+  <p class="muted">Admin updates live coordinates. Users see it on map.</p>
+  <form method="post" class="grid" style="grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px">
+    <div>
+      <label class="muted">Bus No</label>
+      <input name="bus_no" placeholder="SGT-SHUTTLE-01" />
+    </div>
+    <div></div>
+    <div>
+      <label class="muted">Latitude</label>
+      <input name="lat" placeholder="28.4595" required />
+    </div>
+    <div>
+      <label class="muted">Longitude</label>
+      <input name="lng" placeholder="77.0266" required />
+    </div>
+    <div style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+      <button class="btn" type="submit"><i class="fa-solid fa-location-dot"></i> Update</button>
+      <a class="btn secondary" href="{{ url_for('admin_dashboard') }}">Back</a>
+    </div>
+  </form>
+  <div class="muted" style="margin-top:12px">
+    Tip: You can grab coordinates from Google Maps and paste here.
+  </div>
+</div>
+{% endblock %}

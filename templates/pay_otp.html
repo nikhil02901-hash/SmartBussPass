@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <div class="h1">OTP Verification</div>
+  <p class="muted">Enter the OTP sent (demo OTP is shown in a flash message).</p>
+  <form method="post" style="margin-top:14px;max-width:420px;">
+    <label>OTP</label>
+    <input class="input" name="otp" maxlength="6" required placeholder="6-digit OTP" />
+    <button class="btn primary" style="margin-top:12px;">Verify</button>
+  </form>
+</div>
+{% endblock %}

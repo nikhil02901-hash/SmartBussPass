@@ -1,0 +1,92 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <div>
+      <div class="h1">Analytics</div>
+      <div class="muted">Charts + trends + renewal queue</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn" href="{{ url_for('export_csv') }}"><i class="fa-solid fa-file-csv"></i> Export All CSV</a>
+      <a class="btn" href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-gauge"></i> Dashboard</a>
+    </div>
+  </div>
+
+  <div class="grid cols-2" style="margin-top:16px">
+    <div class="card pad" style="background:rgba(255,255,255,0.04)">
+      <div class="badge"><i class="fa-solid fa-chart-pie"></i> Status Distribution</div>
+      <canvas id="statusChart" height="160"></canvas>
+    </div>
+    <div class="card pad" style="background:rgba(255,255,255,0.04)">
+      <div class="badge"><i class="fa-solid fa-chart-column"></i> Fraud Risk Distribution</div>
+      <canvas id="riskChart" height="160"></canvas>
+    </div>
+  </div>
+
+  <div class="card pad" style="margin-top:16px;background:rgba(255,255,255,0.04)">
+    <div class="badge"><i class="fa-solid fa-calendar-days"></i> Last 7 Days Applications</div>
+    <canvas id="last7Chart" height="120"></canvas>
+  </div>
+
+  <div class="card pad" style="margin-top:16px;background:rgba(255,255,255,0.04)">
+    <div class="badge"><i class="fa-solid fa-rotate"></i> Renewal Requests (Latest)</div>
+    <div style="overflow:auto;margin-top:12px">
+      <table class="table">
+        <tr><th>ID</th><th>Pass</th><th>User</th><th>Status</th><th>Requested</th><th>Action</th></tr>
+        {% for r in renewals %}
+        <tr>
+          <td>#{{ r.id }}</td>
+          <td><a href="{{ url_for('pass_details', pass_id=r.pass_id) }}">#{{ r.pass_id }}</a></td>
+          <td>{{ r.user_name }} <span class="muted">({{ r.email }})</span></td>
+          <td><span class="badge">{{ r.status }}</span></td>
+          <td class="muted" style="font-size:12px">{{ r.requested_at }}</td>
+          <td <td>
+  <div style="display:flex; gap:8px; flex-wrap:wrap">
+    <form method="POST" action="{{ url_for('admin_renewal_decision', renewal_id=r.id, decision='Approved') }}" style="margin:0">
+      <input class="input" name="remarks" placeholder="Remarks (optional)" style="width:180px">
+      <button class="btn good" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
+    </form>
+
+    <form method="POST" action="{{ url_for('admin_renewal_decision', renewal_id=r.id, decision='Rejected') }}" style="margin:0">
+      <input class="input" name="remarks" placeholder="Reason (optional)" style="width:180px">
+      <button class="btn bad" type="submit"><i class="fa-solid fa-xmark"></i> Reject</button>
+    </form>
+  </div>
+</td>
+</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const statusLabels = {{ status_counts|map(attribute='status')|list|tojson }};
+const statusData   = {{ status_counts|map(attribute='c')|list|tojson }};
+const riskLabels   = {{ risk_counts|map(attribute='fraud_flag')|list|tojson }};
+const riskData     = {{ risk_counts|map(attribute='c')|list|tojson }};
+const last7Labels  = {{ last7|map(attribute='day')|list|tojson }};
+const last7Data    = {{ last7|map(attribute='count')|list|tojson }};
+
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: { labels: statusLabels, datasets: [{ data: statusData }] },
+  options: { plugins:{ legend:{ labels:{ color:'white' } } } }
+});
+new Chart(document.getElementById('riskChart'), {
+  type: 'bar',
+  data: { labels: riskLabels, datasets: [{ data: riskData }] },
+  options: { scales:{ x:{ ticks:{ color:'white' } }, y:{ ticks:{ color:'white' } } }, plugins:{ legend:{ display:false } } }
+});
+new Chart(document.getElementById('last7Chart'), {
+  type: 'line',
+  data: { labels: last7Labels, datasets: [{ data: last7Data, tension:0.35 }] },
+  options: { scales:{ x:{ ticks:{ color:'white' } }, y:{ ticks:{ color:'white' } } }, plugins:{ legend:{ display:false } } }
+});
+</script>
+{% endblock %}

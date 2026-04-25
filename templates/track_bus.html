@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <h2 class="h1">Live Bus Tracking</h2>
+  <p class="muted">Default bus: <b>SGT-SHUTTLE-01</b>. Location auto-refreshes every 3 seconds.</p>
+  <div id="map" style="height:420px;border-radius:16px;overflow:hidden;"></div>
+  <p class="muted" id="info" style="margin-top:10px;"></p>
+
+  <div class="muted" style="margin-top:10px">
+    If admin hasn't updated location yet, demo mode will animate a sample path.
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const BUS_NO = "SGT-SHUTTLE-01";
+  const map = L.map('map').setView([28.4595,77.0266], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
+
+  const marker = L.marker([28.4595,77.0266]).addTo(map);
+  const info = document.getElementById("info");
+
+  async function fetchLive(){
+    // Prefer admin-updated endpoint
+    let r = await fetch(`/api/bus/${BUS_NO}`);
+    if (r.ok) return await r.json();
+
+    // Fallback demo endpoint (always returns)
+    r = await fetch('/api/bus_location');
+    return await r.json();
+  }
+
+  async function poll(){
+    try{
+      const d = await fetchLive();
+      marker.setLatLng([d.lat, d.lng]);
+      map.panTo([d.lat, d.lng], {animate:true, duration:0.5});
+      info.textContent = `Bus: ${d.bus_no || BUS_NO} | Updated: ${d.updated_at}`;
+    }catch(e){
+      info.textContent = "Tracking unavailable right now.";
+    }
+  }
+  poll();
+  setInterval(poll, 3000);
+</script>
+{% endblock %}

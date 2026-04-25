@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <div class="h1">Payment</div>
+  <p class="muted">Pass ID: {{ bp['pass_id'] }} | Amount: ₹{{ amount }}</p>
+  <div style="margin-top:16px;">
+    <form method="post">
+      <label class="muted">Choose Method</label>
+      <select class="input" name="method" required>
+        <option value="">-- Select --</option>
+        <option value="UPI">UPI (QR)</option>
+        <option value="CARD">Debit/Credit Card (Demo)</option>
+        <option value="EMI">EMI (3/6/12 months)</option>
+        <option value="CASH">Cash at Counter (Demo)</option>
+      </select>
+      <button class="btn primary" style="margin-top:12px;">Continue</button>
+    </form>
+
+    <div style="margin-top:14px;" class="muted">
+      {% if (bp['fraud_flag'] or '')|lower == 'high' %}
+        Note: High-risk applications require OTP verification before payment.
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <div class="h1">UPI QR Payment</div>
+  <p class="muted">Amount: ₹{{ amount }} | Pass ID: {{ pass_id }}</p>
+
+  <div style="margin-top:14px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;">
+    <div class="card pad" style="max-width:320px;">
+      <img src="{{ url_for('pay_upi_qr', pass_id=pass_id) }}" alt="UPI QR" style="width:260px;border-radius:12px;display:block;margin:auto;" />
+      <p class="muted" style="margin-top:10px;text-align:center;">Scan & Pay using any UPI app</p>
+    </div>
+
+    <div style="min-width:260px;">
+      <div class="badge">UPI ID: demo@upi</div>
+      <div class="badge" style="margin-left:8px;">Note: PASS_{{ pass_id }}</div>
+      <form method="post" style="margin-top:14px;">
+        <button class="btn primary">I have paid (Confirm)</button>
+      </form>
+      <p class="muted" style="margin-top:10px;">Demo: This confirms payment without real gateway.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

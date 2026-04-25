@@ -1,0 +1,154 @@
+
+{% extends "base.html" %}
+{% block content %}
+<div class="grid cols-2">
+  <div class="card pad">
+    <div class="h1">Pass #{{ bp.pass_id }}</div>
+    <div class="muted">Status:
+      {% if bp.status=='Approved' %}
+        <span class="badge good"><i class="fa-solid fa-circle-check"></i> Approved</span>
+      {% elif bp.status=='Rejected' %}
+        <span class="badge bad"><i class="fa-solid fa-circle-xmark"></i> Rejected</span>
+      {% else %}
+        <span class="badge warn"><i class="fa-solid fa-clock"></i> Pending</span>
+      {% endif %}
+      <span class="badge"><i class="fa-solid fa-shield"></i> Fraud: {{ bp.fraud_flag }} ({{ bp.fraud_score }})</span>
+    </div>
+
+    <div style="margin-top:14px" class="grid cols-2">
+      <div>
+        <div class="muted">Name</div>
+        <div style="font-weight:900">{{ bp.user_name }}</div>
+      </div>
+      <div>
+        <div class="muted">Email</div>
+        <div style="font-weight:700">{{ bp.email }}</div>
+      </div>
+      <div>
+        <div class="muted">Route</div>
+        <div style="font-weight:800">{{ bp.route }}</div>
+      </div>
+      <div>
+        <div class="muted">Pass Type</div>
+        <div style="font-weight:800">{{ bp.pass_type }}</div>
+      </div>
+      <div>
+        <div class="muted">Valid From</div>
+        <div>{{ bp.valid_from or '-' }}</div>
+      </div>
+      <div>
+        <div class="muted">Valid Till</div>
+        <div>{{ bp.valid_till or '-' }}</div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px" class="muted">Remarks</div>
+    <div class="card pad" style="background:rgba(2,6,23,0.35)">{{ bp.remarks or '-' }}</div>
+
+    <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap">
+      <a class="btn" href="{{ url_for('download_qr', pass_id=bp.pass_id) }}"><i class="fa-solid fa-qrcode"></i> Download QR</a>
+      {% if bp.status=='Approved' %}
+        <a class="btn good" href="{{ url_for('download_pdf', pass_id=bp.pass_id) }}"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+      {% endif %}
+      <a class="btn primary" href="{{ url_for('verify_pass', pass_id=bp.pass_id) }}" target="_blank"><i class="fa-solid fa-shield-halved"></i> Verify Page</a>
+      {% if bp.status == "Approved" and session.role != "admin" %}
+<form method="POST" action="{{ url_for('request_renewal', pass_id=bp.pass_id) }}">
+    <button class="btn btn-warning">Request Renewal</button>
+</form>
+{% endif %}
+
+    </div>
+
+    {% if session.get('role') in ['admin','verifier'] and bp.status=='Pending' %}
+      <form method="POST" action="{{ url_for('mark_reviewed', pass_id=bp.pass_id) }}" style="margin-top:14px">
+        <div class="muted">Staff Review Note (optional)</div>
+        <input class="input" name="remarks" placeholder="Checked documents / basic verification done">
+        <button class="btn" style="margin-top:10px"><i class="fa-solid fa-check"></i> Mark Reviewed</button>
+      </form>
+    {% endif %}
+
+    {% if session.get('role')=='admin' %}
+      <div style="margin-top:16px" class="grid cols-2">
+        <form method="POST" action="{{ url_for('update_pass', pass_id=bp.pass_id, status='Approved') }}">
+          <input class="input" name="remarks" placeholder="Approval remarks (optional)">
+          <button class="btn good" style="margin-top:10px;width:100%"><i class="fa-solid fa-thumbs-up"></i> Approve</button>
+        </form>
+        <form method="POST" action="{{ url_for('update_pass', pass_id=bp.pass_id, status='Rejected') }}">
+          <input class="input" name="remarks" placeholder="Reject reason (optional)">
+          <button class="btn bad" style="margin-top:10px;width:100%"><i class="fa-solid fa-ban"></i> Reject</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="card pad">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="h1" style="font-size:22px">Pass Card Preview</div>
+      <span class="badge"><i class="fa-solid fa-id-card-clip"></i> Front/Back</span>
+    </div>
+
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:14px">
+      <div class="card pad" style="width: 360px; background:rgba(2,6,23,0.35)">
+        <div class="muted" style="font-size:12px">FRONT</div>
+        <div style="display:flex;gap:12px;margin-top:12px">
+          <div style="width:84px;height:84px;border-radius:16px;border:1px solid rgba(255,255,255,0.14);overflow:hidden;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center">
+            {% if bp.photo_path %}
+              <img src="/{{ bp.photo_path }}" style="width:100%;height:100%;object-fit:cover">
+            {% else %}
+              <i class="fa-solid fa-user" style="opacity:.6;font-size:26px"></i>
+            {% endif %}
+          </div>
+          <div>
+            <div style="font-weight:900;font-size:16px">{{ bp.user_name }}</div>
+            <div class="muted" style="font-size:12px">{{ bp.email }}</div>
+            <div style="margin-top:10px" class="badge"><i class="fa-solid fa-route"></i> {{ bp.route }}</div>
+            <div style="margin-top:8px" class="badge"><i class="fa-solid fa-ticket"></i> {{ bp.pass_type }}</div>
+          </div>
+        </div>
+        <div style="margin-top:12px" class="muted">Pass ID: {{ bp.pass_id }}</div>
+      </div>
+
+      <div class="card pad" style="width: 360px; background:rgba(2,6,23,0.35)">
+        <div class="muted" style="font-size:12px">BACK</div>
+        <div style="margin-top:12px" class="muted">Status: {{ bp.status }}</div>
+        <div class="muted">Valid: {{ bp.valid_from or '-' }} → {{ bp.valid_till or '-' }}</div>
+        <div class="muted">Fraud Risk: {{ bp.fraud_flag }} ({{ bp.fraud_score }})</div>
+        <div style="margin-top:12px" class="muted">Scan QR:</div>
+        <div class="card pad" style="display:inline-block;background:rgba(255,255,255,0.04)">
+          <i class="fa-solid fa-qrcode" style="font-size:42px;opacity:.6"></i>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px" class="h1" style="font-size:22px">Recent Audit Logs</div>
+    <table class="table" style="margin-top:10px">
+      <tr><th>Time</th><th>Actor</th><th>Action</th><th>Details</th></tr>
+      {% for l in logs %}
+        <tr>
+          <td class="muted" style="font-size:12px">{{ l.created_at }}</td>
+          <td>{{ l.actor_email }}</td>
+          <td><span class="badge">{{ l.action }}</span></td>
+          <td class="muted">{{ l.details }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+<div style="margin-top:14px;">
+  <span class="badge">Price: ₹{{ bp['price'] or 0 }}</span>
+  <span class="badge">Payment: {{ bp['payment_status'] or 'Pending' }}</span>
+  {% if bp['payment_status'] != 'Paid' and bp['status']=='Approved' and session.get('role')!='verifier' %}
+    <a class="btn primary" href="{{ url_for('pay', pass_id=bp['pass_id']) }}" style="margin-left:10px;">Pay Now</a>
+  {% endif %}
+  {% if bp['payment_status'] in ['Paid','EMI'] %}
+    <a class="btn" href="{{ url_for('receipt_pdf', pass_id=bp['pass_id']) }}" style="margin-left:10px;">Download Receipt</a>
+  {% endif %}
+  {% if bp['payment_status'] == 'EMI' %}
+    <a class="btn" href="{{ url_for('emi_schedule', pass_id=bp['pass_id']) }}" style="margin-left:10px;">View EMI Schedule</a>
+  {% endif %}
+  <a class="btn secondary" href="{{ url_for('upload_docs', pass_id=bp['pass_id']) }}" style="margin-left:10px;">Upload Documents</a>
+  <a class="btn secondary" href="{{ url_for('track_bus') }}" style="margin-left:10px;">Live Bus Tracking</a>
+</div>
+
+{% endblock %}

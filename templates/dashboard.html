@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block content %}
+{% set ns = namespace(total=0, approved=0, pending=0, rejected=0, paid=0) %}
+{% for p in passes %}
+  {% set ns.total = ns.total + 1 %}
+  {% if p.status == 'Approved' %}{% set ns.approved = ns.approved + 1 %}{% endif %}
+  {% if p.status == 'Pending' %}{% set ns.pending = ns.pending + 1 %}{% endif %}
+  {% if p.status == 'Rejected' %}{% set ns.rejected = ns.rejected + 1 %}{% endif %}
+  {% if (p.payment_status or '') == 'Paid' %}{% set ns.paid = ns.paid + 1 %}{% endif %}
+{% endfor %}
+
+<div class="card pad glow">
+  <div class="card-header">
+    <div>
+      <div class="title">User Dashboard</div>
+      <div class="subtitle">One place to manage your pass, payments, EMI and tracking.</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <a class="btn primary" href="{{ url_for('apply_pass') }}"><i class="fa-solid fa-plus"></i> Apply Pass</a>
+      <a class="btn" href="{{ url_for('track_bus') }}"><i class="fa-solid fa-location-dot"></i> Live Tracking</a>
+    </div>
+  </div>
+
+  <div class="grid cols-4" style="margin-top:16px">
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">Total Passes</div>
+          <div class="num">{{ ns.total }}</div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-id-card-clip"></i></div>
+      </div>
+    </div>
+
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">Approved</div>
+          <div class="num">{{ ns.approved }}</div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+      </div>
+    </div>
+
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">Pending</div>
+          <div class="num">{{ ns.pending }}</div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-hourglass-half"></i></div>
+      </div>
+    </div>
+
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">Payments Done</div>
+          <div class="num">{{ ns.paid }}</div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="hr">
+
+  <div class="grid cols-2">
+    <div class="card pad soft">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:900;font-size:16px">SGT University Route (Fixed)</div>
+          <div class="subtitle">Your route end-point is locked to <b>SGT University</b> as required.</div>
+        </div>
+        <span class="badge"><i class="fa-solid fa-lock"></i> Route Locked</span>
+      </div>
+    </div>
+
+    <div class="card pad soft">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+        <div>
+          <div style="font-weight:900;font-size:16px">Secure QR Verification</div>
+          <div class="subtitle">QR is signed (anti-fake). Any tampering gets rejected.</div>
+        </div>
+        <span class="badge good"><i class="fa-solid fa-shield-halved"></i> Signed QR</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">My Passes</div>
+  <div class="subtitle">Tip: If pass is approved and payment is pending, click <b>Pay</b>. EMI schedule opens inside pass details.</div>
+
+  <div style="overflow:auto;margin-top:10px">
+    <table class="table">
+      <tr>
+        <th>ID</th>
+        <th>Route</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Valid</th>
+        <th>Price</th>
+        <th>Payment</th>
+        <th>Risk</th>
+        <th>Open</th>
+      </tr>
+      {% for p in passes %}
+      <tr>
+        <td><span class="badge">#{{ p.pass_id }}</span></td>
+        <td>{{ p.route }}</td>
+        <td>{{ p.pass_type }}</td>
+        <td>
+          {% if p.status=='Approved' %}<span class="badge good">Approved</span>
+          {% elif p.status=='Rejected' %}<span class="badge bad">Rejected</span>
+          {% else %}<span class="badge warn">Pending</span>{% endif %}
+        </td>
+        <td class="muted" style="font-size:12px">{{ p.valid_from or '-' }} → {{ p.valid_till or '-' }}</td>
+        <td>₹{{ p.price or 0 }}</td>
+        <td>
+          <span class="badge">{{ p.payment_status or 'Pending' }}</span>
+          {% if p.status=='Approved' and (p.payment_status or 'Pending') != 'Paid' and (p.price or 0) > 0 %}
+            <a class="btn good" style="margin-left:8px" href="{{ url_for('pay', pass_id=p.pass_id) }}"><i class="fa-solid fa-credit-card"></i> Pay</a>
+          {% endif %}
+        </td>
+        <td>
+          {% if p.fraud_flag=='High' %}<span class="badge bad"><i class="fa-solid fa-triangle-exclamation"></i> High ({{ p.fraud_score }})</span>
+          {% elif p.fraud_flag=='Medium' %}<span class="badge warn">Medium ({{ p.fraud_score }})</span>
+          {% else %}<span class="badge good">Low ({{ p.fraud_score }})</span>{% endif %}
+        </td>
+        <td><a class="btn" href="{{ url_for('pass_details', pass_id=p.pass_id) }}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a></td>
+      </tr>
+      {% endfor %}
+      {% if not passes %}
+      <tr><td colspan="9" class="muted">No passes yet. Click <b>Apply Pass</b> to create one.</td></tr>
+      {% endif %}
+    </table>
+  </div>
+
+  <div class="section-title">Renewal Requests</div>
+  <div style="overflow:auto;margin-top:10px">
+    <table class="table">
+      <tr><th>ID</th><th>Pass</th><th>Status</th><th>Requested</th></tr>
+      {% for r in renewals %}
+      <tr>
+        <td><span class="badge">#{{ r.id }}</span></td>
+        <td><a href="{{ url_for('pass_details', pass_id=r.pass_id) }}">#{{ r.pass_id }}</a></td>
+        <td><span class="badge">{{ r.status }}</span></td>
+        <td class="muted" style="font-size:12px">{{ r.requested_at }}</td>
+      </tr>
+      {% endfor %}
+      {% if not renewals %}
+      <tr><td colspan="4" class="muted">No renewal requests.</td></tr>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endblock %}

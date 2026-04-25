@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card glow" style="padding:18px;">
+  <div class="card-header">
+    <div>
+      <div class="title">Document Verification</div>
+      <div class="subtitle">Review uploaded documents and verify/reject them.</div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn" href="{{ url_for('admin') }}">Admin Home</a>
+      <a class="btn" href="{{ url_for('admin_audit') }}">Audit Logs</a>
+    </div>
+  </div>
+
+  <hr class="hr"/>
+
+  {% if docs and docs|length>0 %}
+  <table class="table" style="width:100%;">
+    <thead>
+      <tr>
+        <th>Doc</th>
+        <th>Pass</th>
+        <th>User</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Uploaded</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in docs %}
+      <tr>
+        <td>#{{ d['id'] }}</td>
+        <td>
+          <a href="{{ url_for('pass_details', pass_id=d['pass_id']) }}">Pass #{{ d['pass_id'] }}</a>
+          <div class="subtitle" style="margin-top:4px;">Pass Status: {{ d['pass_status'] }}</div>
+        </td>
+        <td>{{ d['user_name'] }}<div class="subtitle" style="margin-top:4px;">{{ d['email'] }}</div></td>
+        <td>{{ d['doc_type'] }}</td>
+        <td>
+          {% if d['status']=='Verified' %}<span class="badge good">Verified</span>
+          {% elif d['status']=='Rejected' %}<span class="badge bad">Rejected</span>
+          {% else %}<span class="badge warn">Pending</span>
+          {% endif %}
+          <div class="subtitle" style="margin-top:4px;">{{ d['remarks'] or '' }}</div>
+        </td>
+        <td>{{ d['uploaded_at'] }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin_set_document_status', doc_id=d['id']) }}" style="display:grid; gap:8px; min-width:260px;">
+            <select class="input" name="status" required>
+              <option value="Pending" {% if d['status']=='Pending' %}selected{% endif %}>Pending</option>
+              <option value="Verified" {% if d['status']=='Verified' %}selected{% endif %}>Verified</option>
+              <option value="Rejected" {% if d['status']=='Rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+            <input class="input" type="text" name="remarks" placeholder="Remarks (optional)" value="{{ d['remarks'] or '' }}" />
+            <button class="btn primary" type="submit">Save</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="card soft" style="padding:14px; opacity:.85;">No documents found.</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card glow" style="padding:18px;">
+  <div class="card-header">
+    <div>
+      <div class="title">Upload Documents</div>
+      <div class="subtitle">Pass ID: {{ bp['pass_id'] }} • {{ bp['user_name'] }} ({{ bp['email'] }})</div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn" href="{{ url_for('pass_details', pass_id=bp['pass_id']) }}">Back to Pass</a>
+      {% if session.get('role') in ['admin','verifier'] %}
+        <a class="btn" href="{{ url_for('admin_documents') }}">Admin: Verify Docs</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <hr class="hr"/>
+
+  <div class="card soft" style="padding:16px;">
+    <div class="section-title" style="margin-top:0;">Upload a new document</div>
+    <form method="POST" enctype="multipart/form-data" style="margin-top:12px; display:grid; gap:12px; max-width:720px;">
+      <div style="display:grid; gap:8px;">
+        <label style="font-weight:800; opacity:.85;">Document Type</label>
+        <select class="input" name="doc_type" required>
+          <option value="Aadhaar">Aadhaar</option>
+          <option value="College ID">College ID</option>
+          <option value="Fee Receipt">Fee Receipt</option>
+          <option value="Other" selected>Other</option>
+        </select>
+      </div>
+
+      <div style="display:grid; gap:8px;">
+        <label style="font-weight:800; opacity:.85;">Choose File (PNG/JPG/PDF)</label>
+        <input class="input" type="file" name="doc_file" accept=".png,.jpg,.jpeg,.pdf" required>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn primary" type="submit">Upload</button>
+        <span class="subtitle">Tip: You can upload multiple documents. Status will show below.</span>
+      </div>
+    </form>
+  </div>
+
+  <div class="section-title">Uploaded Documents</div>
+
+  {% if docs and docs|length > 0 %}
+  <table class="table" style="width:100%; margin-top:10px;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Remarks</th>
+        <th>Uploaded</th>
+        <th>Verified By</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in docs %}
+      <tr>
+        <td>#{{ d['id'] }}</td>
+        <td>{{ d['doc_type'] }}</td>
+        <td>
+          {% if d['status']=='Verified' %}<span class="badge good">Verified</span>
+          {% elif d['status']=='Rejected' %}<span class="badge bad">Rejected</span>
+          {% else %}<span class="badge warn">Pending</span>
+          {% endif %}
+        </td>
+        <td style="max-width:360px; white-space:normal;">{{ d['remarks'] or '-' }}</td>
+        <td>{{ d['uploaded_at'] }}</td>
+        <td>{{ d['verified_by'] or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="card soft" style="padding:14px; margin-top:10px; opacity:.85;">No documents uploaded yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

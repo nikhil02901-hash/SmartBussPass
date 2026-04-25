@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card pad glow">
+  <div class="card-header">
+    <div>
+      <div class="title">Admin Command Center</div>
+      <div class="subtitle">Review applications, verify documents, update tracking, and monitor security.</div>
+      <div class="subtitle">Role: <b>{{ session.get('role') }}</b> {% if not can_decide %}<span class="badge warn" style="margin-left:8px">Verifier Mode</span>{% endif %}</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <a class="btn" href="{{ url_for('api_docs') }}"><i class="fa-solid fa-book"></i> API Docs</a>
+      <a class="btn" href="{{ url_for('export_csv', status=filters.status, risk=filters.risk, q=filters.q) }}"><i class="fa-solid fa-file-csv"></i> Export CSV</a>
+    </div>
+  </div>
+
+  <div class="grid cols-4" style="margin-top:16px">
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">Total Applications</div>
+          <div class="num">{{ kpi.total }}</div>
+          <div class="subtitle"><i class="fa-solid fa-rotate"></i> Pending Renewals: <b>{{ renewal_pending }}</b></div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-inbox"></i></div>
+      </div>
+    </div>
+
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">Approved</div>
+          <div class="num">{{ kpi.approved }}</div>
+          <div class="subtitle">Rejected: <b>{{ kpi.rejected }}</b> • Pending: <b>{{ kpi.pending }}</b></div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+      </div>
+    </div>
+
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">High Risk Queue</div>
+          <div class="num">{{ kpi.high_risk }}</div>
+          <div class="subtitle">Fraud scoring helps prioritize review.</div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      </div>
+    </div>
+
+    <div class="card pad soft">
+      <div class="kpi">
+        <div>
+          <div class="label">Quick Tools</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+            <a class="btn" href="{{ url_for('admin_analytics') }}"><i class="fa-solid fa-chart-line"></i></a>
+            <a class="btn" href="{{ url_for('admin_documents') }}"><i class="fa-solid fa-file-circle-check"></i></a>
+            <a class="btn" href="{{ url_for('admin_bus_update') }}"><i class="fa-solid fa-location-dot"></i></a>
+            <a class="btn" href="{{ url_for('admin_audit') }}"><i class="fa-solid fa-shield"></i></a>
+          </div>
+          <div class="subtitle">Analytics • Docs • Tracking • Audit</div>
+        </div>
+        <div class="icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="hr">
+
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <div>
+      <div class="section-title" style="margin-top:0">Applications</div>
+      <div class="subtitle">Showing {{ passes|length }} of {{ filters.total }} results • Page {{ filters.page }} / {{ filters.pages }}</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn {% if filters.tab=='all' %}primary{% endif %}" href="{{ url_for('admin_dashboard', tab='all') }}"><i class="fa-solid fa-layer-group"></i> All</a>
+      <a class="btn {% if filters.tab=='highrisk' %}bad{% endif %}" href="{{ url_for('admin_dashboard', tab='highrisk') }}"><i class="fa-solid fa-triangle-exclamation"></i> High Risk</a>
+    </div>
+  </div>
+
+  <form method="get" style="margin-top:14px" class="grid cols-3">
+    <input class="input" name="q" value="{{ filters.q }}" placeholder="Search by ID/name/email/route">
+    <select class="input" name="status">
+      <option value="">All Status</option>
+      {% for s in ['Pending','Approved','Rejected'] %}
+        <option value="{{s}}" {% if filters.status==s %}selected{% endif %}>{{s}}</option>
+      {% endfor %}
+    </select>
+    <select class="input" name="risk">
+      <option value="">All Risk</option>
+      {% for r in ['Low','Medium','High'] %}
+        <option value="{{r}}" {% if filters.risk==r %}selected{% endif %}>{{r}}</option>
+      {% endfor %}
+    </select>
+    <input type="hidden" name="tab" value="{{ filters.tab }}">
+    <button class="btn primary" style="grid-column:1/-1;width:max-content"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+  </form>
+
+  <div style="overflow:auto;margin-top:12px">
+    <table class="table">
+      <tr>
+        <th>ID</th><th>Name</th><th>Email</th><th>Route</th><th>Type</th>
+        <th>Status</th><th>Risk</th><th>Created</th><th>Open</th>
+      </tr>
+      {% for p in passes %}
+      <tr>
+        <td><span class="badge">#{{ p.pass_id }}</span></td>
+        <td>{{ p.user_name }}</td>
+        <td class="muted">{{ p.email }}</td>
+        <td>{{ p.route }}</td>
+        <td>{{ p.pass_type }}</td>
+        <td>
+          {% if p.status=='Approved' %}<span class="badge good">Approved</span>
+          {% elif p.status=='Rejected' %}<span class="badge bad">Rejected</span>
+          {% else %}<span class="badge warn">Pending</span>{% endif %}
+        </td>
+        <td>
+          {% if p.fraud_flag=='High' %}<span class="badge bad"><i class="fa-solid fa-triangle-exclamation"></i> High ({{ p.fraud_score }})</span>
+          {% elif p.fraud_flag=='Medium' %}<span class="badge warn">Medium ({{ p.fraud_score }})</span>
+          {% else %}<span class="badge good">Low ({{ p.fraud_score }})</span>{% endif %}
+        </td>
+        <td class="muted" style="font-size:12px">{{ p.created_at }}</td>
+        <td><a class="btn" href="{{ url_for('pass_details', pass_id=p.pass_id) }}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Open</a></td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px">
+    <div class="muted">Per page: {{ filters.per_page }}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      {% if filters.page > 1 %}
+        <a class="btn" href="{{ url_for('admin_dashboard', tab=filters.tab, q=filters.q, status=filters.status, risk=filters.risk, page=filters.page-1, per_page=filters.per_page) }}"><i class="fa-solid fa-angle-left"></i> Prev</a>
+      {% endif %}
+      {% if filters.page < filters.pages %}
+        <a class="btn" href="{{ url_for('admin_dashboard', tab=filters.tab, q=filters.q, status=filters.status, risk=filters.risk, page=filters.page+1, per_page=filters.per_page) }}">Next <i class="fa-solid fa-angle-right"></i></a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

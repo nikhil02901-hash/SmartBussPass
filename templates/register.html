@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad" style="max-width:520px;margin:0 auto">
+  <div class="h1">Create Account</div>
+  <div class="muted">Register to apply for a bus pass.</div>
+
+  <form method="POST" style="margin-top:16px">
+    <div class="muted">Full Name</div>
+    <input class="input" name="name" required placeholder="Your name">
+
+    <div class="muted" style="margin-top:12px">Email</div>
+    <input class="input" name="email" type="email" required placeholder="you@example.com">
+
+    <div class="muted" style="margin-top:12px">Phone Number</div>
+    <input class="input" name="phone" required placeholder="10-digit mobile number">
+
+    <div class="muted" style="margin-top:12px">Password</div>
+    <input class="input" name="password" type="password" required placeholder="Create a strong password">
+
+    <button class="btn primary" style="margin-top:14px">
+      <i class="fa-solid fa-user-plus"></i> Register
+    </button>
+
+    <a class="btn" style="margin-top:10px;display:inline-block" href="{{ url_for('login') }}">Already have an account? Login</a>
+  </form>
+</div>
+{% endblock %}

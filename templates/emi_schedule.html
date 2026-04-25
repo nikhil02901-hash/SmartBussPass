@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+    <div>
+      <div class="h1">EMI Schedule</div>
+      <div class="muted">Pass #{{ bp.pass_id }} | {{ bp.emi_months }} months | ₹{{ bp.emi_monthly_amount }}/month</div>
+    </div>
+    <a class="btn secondary" href="{{ url_for('pass_details', pass_id=bp.pass_id) }}">Back</a>
+  </div>
+
+  {% if installments %}
+  <div style="overflow:auto;margin-top:14px">
+    <table class="table">
+      <thead>
+        <tr><th>#</th><th>Due Date</th><th>Amount</th><th>Status</th><th>Paid At</th><th>Txn</th>{% if session.role=='admin' %}<th>Admin</th>{% endif %}</tr>
+      </thead>
+      <tbody>
+        {% for i in installments %}
+        <tr>
+          <td>{{ i.installment_no }}</td>
+          <td>{{ i.due_date }}</td>
+          <td>₹{{ i.amount }}</td>
+          <td><span class="badge">{{ i.status }}</span></td>
+          <td class="muted">{{ i.paid_at or '-' }}</td>
+          <td class="muted">{{ i.txn_id or '-' }}</td>
+          {% if session.role=='admin' %}
+          <td>
+            {% if i.status != 'Paid' %}
+            <form method="post" action="{{ url_for('admin_emi_mark_paid', inst_id=i.id) }}">
+              <button class="btn" type="submit">Mark Paid</button>
+            </form>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="muted" style="margin-top:12px">No EMI installments found.</p>
+  {% endif %}
+</div>
+{% endblock %}

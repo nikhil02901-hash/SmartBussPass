@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pass Verification</title>
+  <style>
+    body{font-family:Arial;background:#0f172a;color:white;text-align:center;padding:40px}
+    .card{background:#1e293b;padding:30px;border-radius:12px;display:inline-block}
+    .ok{color:#22c55e}.bad{color:#ef4444}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Bus Pass Verification</h1>
+    <p><b>ID:</b> {{bp.pass_id}}</p>
+    <p><b>Name:</b> {{bp.user_name}}</p>
+    <p><b>Route:</b> {{bp.route}}</p>
+    <p><b>Type:</b> {{bp.pass_type}}</p>
+    <p>Status: <span class="{{'ok' if bp.status=='Approved' else 'bad'}}">{{bp.status}}</span></p>
+    <p>Valid Till: {{bp.valid_till or '-'}}</p>
+  </div>
+</body>
+</html>

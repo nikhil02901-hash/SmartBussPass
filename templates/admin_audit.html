@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card glow" style="padding:18px;">
+  <div class="card-header">
+    <div>
+      <div class="title">Audit Logs</div>
+      <div class="subtitle">Latest actions (up to 200). Helps in security + debugging.</div>
+    </div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a class="btn" href="{{ url_for('admin') }}">Admin Home</a>
+      <a class="btn" href="{{ url_for('admin_documents') }}">Document Verification</a>
+    </div>
+  </div>
+
+  <hr class="hr"/>
+
+  {% if logs and logs|length>0 %}
+  <table class="table" style="width:100%;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Actor</th>
+        <th>Action</th>
+        <th>Pass</th>
+        <th>Details</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for l in logs %}
+      <tr>
+        <td>#{{ l['id'] }}</td>
+        <td>{{ l['actor_email'] }}</td>
+        <td><span class="badge">{{ l['action'] }}</span></td>
+        <td>
+          {% if l['pass_id'] %}
+            <a href="{{ url_for('pass_details', pass_id=l['pass_id']) }}">{{ l['pass_id'] }}</a>
+          {% else %}-{% endif %}
+        </td>
+        <td style="max-width:520px; white-space:normal;">{{ l['details'] or '-' }}</td>
+        <td>{{ l['created_at'] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <div class="card soft" style="padding:14px; opacity:.85;">No audit entries yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

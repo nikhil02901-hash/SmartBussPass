@@ -1,0 +1,13 @@
+Flask>=3.0.0
+Werkzeug>=3.0.0
+qrcode[pil]>=7.4.2
+Pillow>=10.0.0
+reportlab>=4.0.0
+python-dotenv
+flasgger>=0.9.7
+twilio>=9.0.0
+
+Flask
+bcrypt
+qrcode
+gunicorn

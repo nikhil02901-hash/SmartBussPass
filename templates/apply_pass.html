@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card pad">
+  <div class="h1">Apply for Bus Pass</div>
+  <div class="muted">Complete the steps. Authority verification required.</div>
+  <div style="margin-top:14px" class="progress"><div id="prog"></div></div>
+
+  <div class="grid cols-2" style="margin-top:16px; align-items:start">
+    <div class="card pad" style="background:rgba(255,255,255,0.04)">
+      <form id="wizard" method="POST" enctype="multipart/form-data">
+
+        <div class="muted">From Location</div>
+        <input class="input" type="text" name="route_from" placeholder="From (e.g., Haily Mandi)" required>
+<!-- STEP 1 -->
+        <div class="step" data-step="1">
+          <div class="badge">Step 1 - Personal & Authority</div>
+
+          <div style="margin-top:12px">
+            <label class="muted">Full Name</label>
+            <input class="input" value="{{ session.get('user','') }}" disabled>
+          </div>
+
+          <div style="margin-top:12px">
+            <label class="muted">Email</label>
+            <input class="input" value="{{ session.get('email','') }}" disabled>
+          </div>
+
+          <!-- ✅ NEW AUTHORITY FIELDS -->
+          <div style="margin-top:12px">
+            <label class="muted">College / School Name *</label>
+            <input class="input" name="college_name" id="college_name" placeholder="e.g. DPG Degree College">
+            <div id="collegeErr" class="muted" style="display:none;color:#fca5a5;font-size:12px">Required</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label class="muted">Enrollment No *</label>
+            <input class="input" name="enrollment_no" id="enrollment_no" placeholder="e.g. MCA20240123">
+            <div id="enrollErr" class="muted" style="display:none;color:#fca5a5;font-size:12px">Required</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label class="muted">Photo (optional)</label>
+            <input class="input" type="file" name="photo" id="photo" accept="image/*">
+          </div>
+
+          <div style="margin-top:14px">
+            <button type="button" class="btn primary" onclick="nextStep()">Next</button>
+          </div>
+        </div>
+<div style="margin-top:14px">
+            <button type="button" class="btn" onclick="prevStep()">Back</button>
+            <button type="button" class="btn primary" onclick="nextStep()">Next</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step" data-step="2" style="display:none">
+          <div class="badge">Step 2 - Pass Type</div>
+
+          <div style="margin-top:12px">
+            <label class="muted">Pass Type</label>
+            <select class="input" id="pass_type" name="pass_type" onchange="toggleValidity()">
+              <option value="">Select</option>
+              <option value="Student">Student</option>
+              <option value="Monthly">Faculty Members</option>
+              <option value="Senior Citizen">Support Staff</option>
+            </select>
+<div style="margin-top:10px;"><span class="badge" id="priceBadge">Price: ₹0</span></div>
+
+<!-- VALIDITY OPTION (only for student) -->
+          <div id="validityBox" style="display:none; margin-top:12px;">
+            <label class="muted">Select Validity</label>
+            <select class="input" name="student_validity" id="student_validity" id="student_validity">
+              <option value="">Select</option>
+              <option value="6">6 Months</option>
+              <option value="12">12 Months</option>
+            </select>
+          </div>
+
+            <div id="typeErr" class="muted" style="display:none;color:#fca5a5;font-size:12px">Required</div>
+          </div>
+
+          <div style="margin-top:14px">
+            <button type="button" class="btn" onclick="prevStep()">Back</button>
+            <button type="submit" class="btn good">Submit Application</button>
+          </div>
+
+          <div class="muted" style="margin-top:10px;font-size:12px">
+            Application will be verified by authority before approval.
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- PREVIEW -->
+    <div class="card pad" style="background:rgba(255,255,255,0.04)">
+      <div class="badge">Live Preview</div>
+
+      <div style="margin-top:12px">
+        <div><b>{{ session.get('user','User') }}</b></div>
+        <div class="muted">{{ session.get('email','') }}</div>
+        <div class="muted">College: <span id="collegePrev">-</span></div>
+        <div class="muted">Enrollment: <span id="enrollPrev">-</span></div>
+<div class="muted">Type: <span id="typePrev">-</span></div>
+        <div class="muted">Status: Pending Authority Verification</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let step = 1;
+const total = 2;
+
+function setProgress(){
+  document.getElementById('prog').style.width = ((step-1)/(total-1))*100 + '%';
+}
+
+function showStep(n){
+  step = n;
+  document.querySelectorAll('.step').forEach(s=>{
+    s.style.display = (parseInt(s.dataset.step)===n) ? 'block' : 'none';
+  });
+  setProgress();
+}
+
+function nextStep(){
+  if(step===1){
+    const c = college_name.value.trim();
+    const e = enrollment_no.value.trim();
+    collegeErr.style.display = c ? 'none':'block';
+    enrollErr.style.display = e ? 'none':'block';
+    if(!c || !e) return;
+    collegePrev.innerText = c;
+    enrollPrev.innerText = e;
+  }
+  if(step < total) showStep(step+1);
+}
+
+function prevStep(){ if(step>1) showStep(step-1); }
+
+pass_type.addEventListener('change', e=>{
+  typePrev.innerText = e.target.value || '-';
+  toggleValidity();       // ✅ ensure price updates on pass type change
+});
+
+student_validity.addEventListener('change', ()=>{
+  updatePrice();          // ✅ ensure price updates on validity change
+});
+
+wizard.addEventListener('submit', e=>{
+  const t = pass_type.value.trim();
+  typeErr.style.display = t ? 'none':'block';
+  if(!t){ e.preventDefault(); return; }
+
+  // ✅ Student ke liye validity required
+  if(t === "Student"){
+    if(!student_validity.value){
+      e.preventDefault();
+      alert("Please select student validity (6/12 months).");
+      return;
+    }
+  }
+});
+
+function toggleValidity(){
+  const type = document.getElementById("pass_type").value;
+  const box = document.getElementById("validityBox");
+
+  if(type === "Student"){
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    student_validity.value = "";   // reset validity if not student
+  }
+  updatePrice();
+}
+
+function updatePrice(){
+  const type = document.getElementById("pass_type").value;
+  const validity = document.getElementById("student_validity").value;
+  const badge = document.getElementById("priceBadge");
+
+  let price = 0;
+
+  if(type === "Student"){
+    if(validity === "6") price = 15000;
+    else if(validity === "12") price = 30000;
+  }
+
+  badge.innerText = "Price: ₹" + price;
+}
+
+setProgress();
+toggleValidity();   // ✅ run once on load
+</script>
+{% endblock %}
