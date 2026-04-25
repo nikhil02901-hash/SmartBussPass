@@ -3,3 +3,4 @@ bcrypt
 qrcode
 gunicorn
 Pillow
+reportlab
